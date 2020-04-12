@@ -27,31 +27,22 @@ def clear():
 
 if __name__ == "__main__":
 	clear()
-
-	#For Testing
-	# print(Makeup_MongoDB.Contain_Brand("Wet 'n' Wild",'1'))
-
-	# rows = Makeup_MongoDB.Get_Makeup_DB()
-
-	# for x in rows:
-	# 	print(x)
-
-
+	
 	#For Reset
-	#Makeup_MongoDB.Delete_Makeup_DB()
+	# Makeup_MongoDB.Delete_Makeup_DB()
 
 	#Insert new brand names
-	#Insert_New_Brands()
+	# Insert_New_Brands()
 
 	#insert all eyeshadows
 	branddata = Makeup_MongoDB.Get_Makeup_DB_After("Ole Henriksen")
-	for x in branddata:
-		print(x)
-		totalpages = Temptalia_Scrapping.Get_Nav_Pages(x["temptalia_id"])
+	for brand in branddata:
+		print(brand)
+		totalpages = Temptalia_Scrapping.Get_Nav_Pages(brand["temptalia_id"])
 		alleyeshadows = []
 		for pageindex in range(1, totalpages + 1):
 		#for pageindex in range(1,2):
-			alleyeshadows = alleyeshadows + Temptalia_Scrapping.Get_Eyeshadow(x["name"], x["temptalia_id"], pageindex)
+			alleyeshadows = alleyeshadows + Temptalia_Scrapping.Get_Eyeshadow(brand["name"], brand["temptalia_id"], pageindex)
 
 		# for eyeshadow in alleyeshadows:
 		# 	print(eyeshadow.name)
@@ -64,7 +55,7 @@ if __name__ == "__main__":
 				insertid = Makeup_MongoDB.Insert_Eyeshadow(eyeshadow)
 				print(insertid)
 			else:
-				print("exists")
+				print("Added")
 
 
 

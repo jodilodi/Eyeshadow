@@ -1,4 +1,5 @@
 import pymongo
+from html_scraping import Temptalia_Scrapping
 
 #to view mongo db running in the background ps aux | grep -v grep | grep mongod
 
@@ -21,25 +22,35 @@ class Makeup_MongoDB:
 		else:
 			return False
 
+	#insert name, temptalia_id, has_eyeshadow (flag) to mongodb Brands
 	def Insert_Brand(brand_name, brand_id):
 		mydict = {"name": brand_name, "temptalia_id": brand_id}
+		if Temptalia_Scrapping.Brand_Contains_Eyeshadow(brand_id):
+			mydict["has_eyeshdaow"] = True
+		else:
+			mydict["has_eyeshdaow"] = False
 		x = Makeup_MongoDB.mybrands.insert_one(mydict)
 		return x.inserted_id
 
+	#return all brands in mongodb Brands
 	def Get_Makeup_DB():
 		return Makeup_MongoDB.mybrands.find({})
 
+	#return all brands in mongodb Brands >= passed value
 	def Get_Makeup_DB_After(brand_name):
-		return Makeup_MongoDB.mybrands.find({"name": { "$gte": brand_name}}).sort("name")
+		return Makeup_MongoDB.mybrands.find({"name": { "$gte": brand_name}, "has_eyeshdaow": True}).sort("name")
 
+	#delete Brands mongodb
 	def Delete_Makeup_DB():
 		Makeup_MongoDB.mybrands.delete_many({})
 
+	#return specific object
 	def Get_Makeup_Brand(brand_name):
 		myquery = {"name": brand_name}
 		mydoc = Makeup_MongoDB.mybrands.find(myquery)
 		return mydoc
 
+	#check if the eyeshadow is already in the collection
 	def Contain_Eyeshadow(brand_name, eyeshadow):
 		myquery = {"name": eyeshadow, "brand": brand_name}
 		mydoc = Makeup_MongoDB.myeyeshadow.find(myquery)
@@ -49,10 +60,19 @@ class Makeup_MongoDB:
 		else:
 			return False
 
+	#add eyeshadow
 	def Insert_Eyeshadow(eyeshadow_class):
 		eyeshadowvalues = {key:value for key, value in eyeshadow_class.__dict__.items() if not key.startswith('__') and not callable(key)}
 		x = Makeup_MongoDB.myeyeshadow.insert_one(eyeshadowvalues)
 		return x.inserted_id
 
+	#NOT GOOD! 
+	def Update_Brand(id, update):
+		myquery = {"temptalia_id": id}
+
+		return Makeup_MongoDB.mybrands.update(
+			myquery,
+			update
+			)
 
 

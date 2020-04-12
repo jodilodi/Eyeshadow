@@ -62,6 +62,24 @@ class Temptalia_Scrapping:
 
 		return brands
 
+	def Brand_Contains_Eyeshadow(id):
+		url = r"https://www.temptalia.com/product/page/1/?f_formula_search&f_formula=0&t%%5B0%%5D=12674&brand=%s&time=all&sorting=date_desc&archive=rated" % (id)
+		try:
+			r = requests.get(url, timeout=10)
+		except:
+			return True #dunno, false positive is better than false negative
+
+		html_doc = r.text
+		soup = BeautifulSoup(html_doc, 'html.parser')
+
+		elements = soup.find_all("div", class_="alert alert-danger my-5 f-4 sans-serif text-center")
+		if len(elements) == 0:
+			#there is not warning for not eyeshadows 
+			return True
+		else:
+			return False
+
+
 	def Print_Brands():
 		url = "https://www.temptalia.com/p/_brands/"
 		r = requests.get(url, timeout=5)
