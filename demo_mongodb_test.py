@@ -26,20 +26,20 @@ class Makeup_MongoDB:
 	def Insert_Brand(brand_name, brand_id):
 		mydict = {"name": brand_name, "temptalia_id": brand_id}
 		if Temptalia_Scrapping.Brand_Contains_Eyeshadow(brand_id):
-			mydict["has_eyeshdaow"] = True
+			mydict["has_eyeshadow"] = True
 		else:
-			mydict["has_eyeshdaow"] = False
+			mydict["has_eyeshadow"] = False
 		x = Makeup_MongoDB.mybrands.insert_one(mydict)
 		return x.inserted_id
 
 	#return all brands in mongodb Brands
 	def Get_Makeup_DB():
-		return Makeup_MongoDB.mybrands.find({})
+		return Makeup_MongoDB.mybrands.find({"has_eyeshadow": True})
 
 	#return all brands in mongodb Brands >= passed value
 	#has_eyeshadow flag not working! need to fix
 	def Get_Makeup_DB_After(brand_name):
-		return Makeup_MongoDB.mybrands.find({"name": { "$gte": brand_name}, "has_eyeshdaow": True}).sort("name")
+		return Makeup_MongoDB.mybrands.find({"name": { "$gte": brand_name}, "has_eyeshadow": True}).sort("name")
 
 	#delete Brands mongodb
 	def Delete_Brands_Collection():
@@ -47,7 +47,7 @@ class Makeup_MongoDB:
 
 	#delete Eyeshadow mongodb
 	def Delete_Eyeshadow_Collection():
-		Makeup_MongoDB.myeyeshadow.delete_man({})
+		Makeup_MongoDB.myeyeshadow.delete_many({})
 
 	#return specific object
 	def Get_Makeup_Brand(brand_name):
@@ -71,13 +71,16 @@ class Makeup_MongoDB:
 		x = Makeup_MongoDB.myeyeshadow.insert_one(eyeshadowvalues)
 		return x.inserted_id
 
-	#NOT GOOD! 
-	def Update_Brand(id, update):
-		myquery = {"temptalia_id": id}
+	def Get_All_Eyeshadows():
+		return Makeup_MongoDB.myeyeshadow.find({})
 
-		return Makeup_MongoDB.mybrands.update(
-			myquery,
-			update
-			)
+	def Get_All_Eyeshadows(brand):
+		return Makeup_MongoDB.myeyeshadow.find({"brand": brand})
+
+	def Get_Eyeshadow(id):
+		return Makeup_MongoDB.myeyeshadow.find({"_id": id})
+
+
+
 
 
