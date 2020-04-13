@@ -37,12 +37,17 @@ class Makeup_MongoDB:
 		return Makeup_MongoDB.mybrands.find({})
 
 	#return all brands in mongodb Brands >= passed value
+	#has_eyeshadow flag not working! need to fix
 	def Get_Makeup_DB_After(brand_name):
 		return Makeup_MongoDB.mybrands.find({"name": { "$gte": brand_name}, "has_eyeshdaow": True}).sort("name")
 
 	#delete Brands mongodb
-	def Delete_Makeup_DB():
+	def Delete_Brands_Collection():
 		Makeup_MongoDB.mybrands.delete_many({})
+
+	#delete Eyeshadow mongodb
+	def Delete_Eyeshadow_Collection():
+		Makeup_MongoDB.myeyeshadow.delete_man({})
 
 	#return specific object
 	def Get_Makeup_Brand(brand_name):
