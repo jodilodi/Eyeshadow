@@ -137,7 +137,11 @@ class Temptalia_Scrapping:
 		eyeshadowcolors = []
 		for element in soup.find_all("div", class_="display-badge"):#, class_="display-badge product product-archive"):
 			try:
-				img = element.find("img", class_="img-fluid").get('data-lazy-src')
+				#get the biggest image for the color
+				allimg = element.find("img", class_="img-fluid").get('data-lazy-srcset')
+				img_array = allimg.split(",")
+				img = img_array[len(img_array)-1].strip()
+				img = img[0:img.find(' ')]
 				colorName = element.find("h5", class_="f-3 text-base text-ellipsis m-0").text
 				src = element.find("h5", class_="f-3 text-base text-ellipsis m-0").find("a").get("href")
 				foundin = Temptalia_Scrapping.Get_Available_In_Palette(src)
