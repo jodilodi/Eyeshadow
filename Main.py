@@ -1,7 +1,7 @@
 #scrap temptalia brands and check if mongodb has it already, if not insert
 
 from html_scraping import Temptalia_Scrapping
-from demo_mongodb_test import Makeup_MongoDB
+from mongodb import Makeup_MongoDB
 from os import system, name
 from subprocess import call
 import os
@@ -30,7 +30,7 @@ def clear():
 	_ = call('clear' if os.name == 'posix' else 'cls')
 
 def Insert_New_Eyeshadows():
-	branddata = Makeup_MongoDB.Get_Makeup_DB_After("Kevyn Aucoin")
+	branddata = Makeup_MongoDB.Get_Makeup_DB_After("Makeup Atelier")
 	for brand in branddata:
 		print(brand)
 		totalpages = Temptalia_Scrapping.Get_Nav_Pages(brand["temptalia_id"])
@@ -47,6 +47,27 @@ def Insert_New_Eyeshadows():
 			else:
 				print("Added")
 
+def rgb_to_hsv(RGB):
+	r, g, b = RGB[0]/255.0, RGB[1]/255.0, RGB[2]/255.0
+	mx = max(r, g, b)
+	mn = min(r, g, b)
+	df = mx-mn
+	if mx == mn:
+	    h = 0
+	elif mx == r:
+	    h = (60 * ((g-b)/df) + 360) % 360
+	elif mx == g:
+	    h = (60 * ((b-r)/df) + 120) % 360
+	elif mx == b:
+	    h = (60 * ((r-g)/df) + 240) % 360
+	if mx == 0:
+	    s = 0
+	else:
+	    s = (df/mx)*100
+	v = mx*100
+	return int(round(h)), int(round(s)), int(round(v))
+
+
 def Welcome_Screen():
 	print('###########################################')
 	print('##   Welcome to Temptalia Eyeshadow DB   ##')
@@ -61,7 +82,7 @@ def Print_Menu():
 	print('5. Screen Scrap Eyeshadows')
 	print('6. Print All Eyeshadows')
 	print('7. Convert Eyeshadow Byte To Img')
-	print('8. Test')
+	print('8. Test Pixel Colors')
 
 if __name__ == "__main__":
 	clear()
@@ -89,12 +110,39 @@ if __name__ == "__main__":
 			for es in Eyeshadows:
 				print(es)
 		elif user_input == "7":
-		 	Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows("BH Cosmetics")
-		 	for i in range(0,10):
-		 		eyeshadow = Eyeshadows[i]
-		 		#print(eyeshadow["byte"])
-		 		image = Image.open(io.BytesIO(eyeshadow["byte"]))
-		 		#print(image.size)
-		 		image.save(str(i) + ".jpg")
-		
+		 	Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows("Huda Beauty")
+		 	for eyeshadow in Eyeshadows:
+		 		brand = eyeshadow["brand"]
+		 		if not os.path.isdir(brand):
+		 			os.mkdir(brand)
+		 		try:
+		 			image = Image.open(io.BytesIO(eyeshadow["byte"]))
+			 		image.save(brand + "/" + eyeshadow["name"] + ".jpg")
+			 		print("Saved " + eyeshadow["name"] + ".jpg")
+			 	except:
+			 		print("Could not save " + eyeshadow["name"] + ".jpg")
+		elif user_input == "8":
+			Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows("LORAC")
+			#check four corners and middle
+			for i in range(0,10):
+				eyeshadow = Eyeshadows[i]
+				print(eyeshadow["name"])
+				image = Image.open(io.BytesIO(eyeshadow["byte"]))
+				
+				width, height = image.size
+
+				topleft = x,y = 1,1
+				print(image.getpixel(topleft))
+				print(rgb_to_hsv(image.getpixel(topleft)))
+
+				topright = 1, width -1 
+				print(image.getpixel(topright))
+
+				middle = height/2, width/2
+				middlecolor = r,g,b = image.getpixel(middle)
+				print(image.getpixel(middle))
+
+				print(rgb_to_hsv(middlecolor))
+
+
 
