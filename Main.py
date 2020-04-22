@@ -9,7 +9,11 @@ import io
 from PIL import Image
 from array import array
 import csv
-
+from openpyxl import Workbook
+import openpyxl
+from openpyxl.styles import PatternFill
+import sys
+import math
 #~/.bashrc or ~/.bash_aliases
 #alias python=python3
 #run source ~/.bashrc or source ~/.bash_aliases
@@ -70,12 +74,37 @@ def rgb_to_hsv(RGB):
 	    h = (60 * ((b-r)/df) + 120) % 360
 	elif mx == b:
 	    h = (60 * ((r-g)/df) + 240) % 360
+	
 	if mx == 0:
 	    s = 0
 	else:
 	    s = (df/mx)*100
 	v = mx*100
 	return int(round(h)), int(round(s)), int(round(v))
+
+def hsv_to_rgb(h, s, v):
+	h = h / 360.0
+	s = s / 100.0
+	v = v / 100.0
+	i = math.floor(h*6)
+	f = h*6 - i
+	p = v * (1-s)
+	q = v * (1-f*s)
+	t = v * (1-(1-f)*s)
+
+	r, g, b = [
+	    (v, t, p),
+	    (q, v, p),
+	    (p, v, t),
+	    (p, q, v),
+	    (t, p, v),
+	    (v, p, q),
+	][int(i%6)]
+
+	return int(r*255), int(g*255), int(b*255)
+
+def rgb_to_hex(rgb):
+ 	return '%02x%02x%02x' % rgb
 
 def within_hsv_range(middle, topleft, topright, bottomleft, bottomright):
 	threshold = 45
@@ -155,9 +184,53 @@ def Write_To_CSV(fieldnames, data ):
 		for datarow in data:
 			writer.writerow(datarow)
 
+def Write_To_XSLX_Title(fieldnames):
+	workbook = Workbook()
+	worksheet = workbook.create_sheet('EyeshadowSheet')
+	workbook.remove_sheet(workbook['Sheet'])
+	row = 1
+	col = 1
+	for name in fieldnames:
+		worksheet.cell(row=row, column = col, value = name)
+		col += 1
+	workbook.save('results.xlsx')
+
+def Write_To_XSLX(data):
+	workbook = openpyxl.load_workbook(filename = 'results.xlsx')
+	worksheet = workbook['EyeshadowSheet']
+	for datarow in data:
+		col = 1
+		row = worksheet.max_row + 1
+		for datacell in datarow:
+			worksheet.cell(row=row, column=col, value=str(datarow[datacell]))
+			col += 1
+
+		MiddleHSV = datarow["MiddleHSV"]
+		rgb = hsv_to_rgb(MiddleHSV[0],MiddleHSV[1], MiddleHSV[2])
+		color = '{0}'.format(rgb_to_hex(rgb))
+		# cell_format = workbook.add_format()
+		# cell_format.set_bg_color(color)
+		# worksheet.cell(row = row, column= col, value ="Middle HSV", cell_format)
+		a1 = worksheet[row][col-1]
+		a1.fill  = PatternFill(start_color=color, fill_type="solid")
+
+		# col += 1
+
+		AvgHSV = datarow["AvgHSV"]
+		rgb = hsv_to_rgb(AvgHSV[0], AvgHSV[1], AvgHSV[2])
+		color = '{0}'.format(rgb_to_hex(rgb))
+		# cell_format1 = workbook.add_format()
+		# cell_format1.set_bg_color(color)
+		# worksheet.cell(row = row, column = col, value="Avg HSV", cell_format1)
+		a2 = worksheet[row][col]
+		a2.fill = PatternFill(start_color=color, fill_type="solid")
+		
+	#workbook.close()
+	workbook.save('results.xlsx')
+	
 def Colors_Within_Range(image, middle, borderdistance, middlehsv):
 	results = Analyze_Image(image, middle, borderdistance)
-	print("Middle : {0} vs Avg : {1}".format(middlehsv[0], results[0][0]))
+	#print("Middle : {0} vs Avg : {1}".format(middlehsv[0], results[0][0]))
 	#if within 60 degree range or when avg + 360 within 60 range
 	low = middlehsv[0] - 30
 	high = middlehsv[0] + 30
@@ -203,47 +276,57 @@ def Calculate_Image_Box(image, middle, middlehsv):
 	return borderdistance
 
 def Calculate_HSV():
-	Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows("Anastasia")
-	#check four corners and middle
-	count = 0
-	errorcolors = []
-	error = 0
-	colorRows = []
-	# for i in range(0,20):
-	# 	eyeshadow = Eyeshadows[i]
-	for eyeshadow in Eyeshadows:
-		print(eyeshadow["name"])
-		image = Image.open(io.BytesIO(eyeshadow["byte"]))
-		
-		width, height = image.size
-		middle = middlex, middley = height/2, width/2
-		middlehsv = rgb_to_hsv(image.getpixel(middle))
-		if middlehsv == -1:
-			error += 1
-			continue
-		borderdistance = Calculate_Image_Box(image, middle, middlehsv)
+	Brands = Makeup_MongoDB.Get_All_Brands()
+	fieldnames = ["Brand", "FoundIn", "Name", "MiddleHSV", "AvgHSV", "UniquePixels", "WithinRange", "MiddleRGB", "AvgRGB"]
+	Write_To_XSLX_Title(fieldnames)
+	for brand in Brands:
+		print(brand)
+		Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows_By_Brand(brand["name"])
+		#check four corners and middle
+		count = 0
+		errorcolors = []
+		error = 0
+		colorRows = []
+		for eyeshadow in Eyeshadows:
+			print(eyeshadow["name"])
+			try: 
+				image = Image.open(io.BytesIO(eyeshadow["byte"]))
+			except:
+				count+= 1
+				errorcolors.append(eyeshadow["name"])
+				continue	
 
-		if borderdistance == 0:
-			count += 1
-			errorcolors.append(eyeshadow["name"])
-		else:
-			withinRange, results = Colors_Within_Range(image, middle, borderdistance, middlehsv)
+			width, height = image.size
+			middle = middlex, middley = height/2, width/2
+			middlehsv = rgb_to_hsv(image.getpixel(middle))
+			if middlehsv == -1:
+				error += 1
+				continue
+			borderdistance = Calculate_Image_Box(image, middle, middlehsv)
 
-			RowDict = {}
-			RowDict["Brand"] = eyeshadow["brand"]
-			RowDict["FoundIn"] = eyeshadow["foundin"]
-			RowDict["Name"] = eyeshadow["name"]
-			RowDict["MiddleHSV"] = middlehsv
-			RowDict["AvgHSV"] = results[0]
-			RowDict["UniquePixels"] = results[1]
-			RowDict["WithinRange"] = withinRange
-			colorRows.append(RowDict)
+			if borderdistance == 0:
+				count += 1
+				errorcolors.append(eyeshadow["name"])
+			else:
+				withinRange, results = Colors_Within_Range(image, middle, borderdistance, middlehsv)
 
+				RowDict = {}
+				RowDict["Brand"] = eyeshadow["brand"]
+				RowDict["FoundIn"] = eyeshadow["foundin"]
+				RowDict["Name"] = eyeshadow["name"]
+				RowDict["MiddleHSV"] = middlehsv
+				RowDict["AvgHSV"] = results[0]
+				RowDict["UniquePixels"] = results[1]
+				RowDict["WithinRange"] = withinRange
+				colorRows.append(RowDict)
+		print('writing brand to excel')	
+		Write_To_XSLX(colorRows)
 	print("Total " + str(count))
 	print(errorcolors)
 	print("Error " + str(error))
-	fieldnames = ["Brand", "FoundIn", "Name", "MiddleHSV", "AvgHSV", "UniquePixels", "WithinRange"]
 	Write_To_CSV(fieldnames, colorRows)
+
+	#workbook.close()
 
 def Welcome_Screen():
 	print('###########################################')
@@ -288,14 +371,19 @@ if __name__ == "__main__":
 			for es in Eyeshadows:
 				print(es)
 		elif user_input == "7":
-		 	Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows("Huda Beauty")
+		 	Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows()
+		 	#put everything in brands folder first
+		 	if not os.path.isdir("Brands"):
+		 		os.mkdir("Brands")
+
 		 	for eyeshadow in Eyeshadows:
 		 		brand = eyeshadow["brand"]
-		 		if not os.path.isdir(brand):
-		 			os.mkdir(brand)
+		 		filepath = "Brands/{0}".format(brand)
+		 		if not os.path.isdir(filepath):
+		 			os.mkdir(filepath)
 		 		try:
 		 			image = Image.open(io.BytesIO(eyeshadow["byte"]))
-			 		image.save(brand + "/" + eyeshadow["name"] + ".jpg")
+			 		image.save(filepath + "/" + eyeshadow["name"] + ".jpg")
 			 		print("Saved " + eyeshadow["name"] + ".jpg")
 			 	except:
 			 		print("Could not save " + eyeshadow["name"] + ".jpg")
@@ -306,3 +394,8 @@ if __name__ == "__main__":
 			to_collection = input('To Collection: ')
 			Makeup_MongoDB.Copy_Collection(from_collection, to_collection)
 			print('Complete Copying Collection')
+		# elif user_input == "reset":
+		# 	os.execl(sys.executable, 'python', "Main.py")
+		elif user_input == "reset":
+			python = sys.executable
+			os.execl(python, python, * sys.argv)
