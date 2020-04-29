@@ -19,7 +19,6 @@ import time
 #run source ~/.bashrc or source ~/.bash_aliases
 
 def Insert_New_Brands():
-
 	print("Get all brands from Temptalia")
 	AllBrands = Temptalia_Scrapping.Get_Brands()
 	#print(AllBrands)
@@ -56,11 +55,9 @@ def Insert_New_Eyeshadows():
 			else:
 				print("Added")
 
-
-
 def Calculate_RGB(filename):
 	Brands = Makeup_MongoDB.Get_All_Brands()
-	fieldnames = ["Brand", "FoundIn", "Name", "MiddleRGB", "AvgRGB", "ColorRGB", "ColorAvgRGB"]
+	fieldnames = ["Brand", "FoundIn", "Name", "MiddleRGB", "AvgRGB","ModeCount", "ModeRGB","MinRGB", "MaxRGB", "ColorRGB", "ColorAvgRGB", "ColorModeRGB" ]
 	Write_Results_Class.Write_To_XSLX_Title(fieldnames, filename)
 	for brand in Brands:
 		print(brand)
@@ -90,12 +87,18 @@ def Calculate_RGB(filename):
 				errorcolors.append(eyeshadow["name"])
 			else:
 			 	results = Color_Analysis.AVG_Image_RGB(image, middle, borderdistance)
+			 	MIN, MAX = Color_Analysis.Min_Max_RGB(image, middle, borderdistance)
+			 	ModeCount, ModeRGB = Color_Analysis.Calculate_Mode_RGB(image,middle, borderdistance)
 			 	RowDict = {}
 			 	RowDict["Brand"] = eyeshadow["brand"]
 			 	RowDict["FoundIn"] = eyeshadow["foundin"]
 			 	RowDict["Name"] = eyeshadow["name"]
 			 	RowDict["MiddleRGB"] = middlergb
 			 	RowDict["AvgRGB"] = results
+			 	RowDict["ModeCount"] = ModeCount
+			 	RowDict["ModeRGB"] =  ModeRGB
+			 	RowDict["MinRGB"] = MIN
+			 	RowDict["MaxRGB"] = MAX
 			 	colorRows.append(RowDict)
 		print('writing brand to excel')	
 		Write_Results_Class.Write_To_XSLX_RGB(colorRows, filename)
@@ -170,6 +173,7 @@ if __name__ == "__main__":
 			if len(filename) == 0:
 				filename = "Results"
 			filename = "{0}.xlsx".format(filename)
+			
 			Calculate_RGB(filename)
 		elif user_input == "9":
 			from_collection = input('From Collection: ')
