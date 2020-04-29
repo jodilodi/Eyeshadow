@@ -1,11 +1,12 @@
 import math
+import operator
 
 class Color_Class:
 	def rgb_to_hex(rgb):
 	 	return '%02x%02x%02x' % rgb
 
 class Color_Analysis:
-	def Calculate_Mode_Count_RGB(image, middle, borderdistance):
+	def Calculate_Mode_RGB(image, middle, borderdistance):
 		start = x,y = middle[0] - borderdistance, middle[1] - borderdistance
 		RGBDic = {}
 		for i in range(int(start[0]), int(start[0] + borderdistance*2)):
@@ -18,7 +19,33 @@ class Color_Analysis:
 				else:
 					RGBDic[RGB] = 1
 		# return len(HSVDic)
-		return len(RGBDic)	
+		return len(RGBDic), max(RGBDic.items(), key=operator.itemgetter(1))[0]
+
+	
+
+
+	def Min_Max_RGB(image, middle, borderdistance):
+		start = x,y = middle[0] - borderdistance, middle[1] - borderdistance
+		R = []
+		G = []
+		B = []
+		for i in range(int(start[0]), int(start[0] + borderdistance*2)):
+			for j in range(int(start[1]), int(start[1] + borderdistance*2)):
+				pixel = i,j 
+				RGB = r,g,b =image.getpixel(pixel)
+				
+				# if RGB in RGBDic:
+				# 	RGBDic[RGB]+= 1
+				# else:
+				# 	RGBDic[RGB] = 1
+				R.append(RGB[0])
+				G.append(RGB[1])
+				B.append(RGB[2])
+		# return len(HSVDic)
+		MIN = r,g,b = min(R), min(G), min(B)
+		MAX = r,g,b = max(R), max(G), max(B)
+
+		return MIN, MAX
 
 	def within_rgb_frame(middle, topleft, topright, bottomleft, bottomright):
 		#format r,g,b from each passed variable
