@@ -13,7 +13,7 @@ class Write_Results_Class:
 			for datarow in data:
 				writer.writerow(datarow)
 
-	def Write_To_XSLX_Title(fieldnames, filename):
+	def Write_To_XSLX_Title(fieldnames, file_name):
 		workbook = Workbook()
 		worksheet = workbook.create_sheet('EyeshadowSheet')
 
@@ -25,10 +25,10 @@ class Write_Results_Class:
 		for name in fieldnames:
 			worksheet.cell(row=row, column = col, value = name)
 			col += 1
-		workbook.save(filename)
+		workbook.save(file_name)
 
-	def Write_To_XSLX_RGB(data, filename):
-		workbook = openpyxl.load_workbook(filename = filename)
+	def Write_To_XSLX_RGB(data, file_name):
+		workbook = openpyxl.load_workbook(filename = file_name)
 		worksheet = workbook['EyeshadowSheet']
 		for datarow in data:
 			col = 1
@@ -52,5 +52,10 @@ class Write_Results_Class:
 			a2 = worksheet[row][col]
 			a2.fill = PatternFill(start_color=color, fill_type="solid")
 			
+			rgb = datarow["ModeRGB"]
+			color = '{0}'.format(Color_Class.rgb_to_hex(rgb))
+			a3 = worksheet[row][col+1]
+			a3.fill = PatternFill(start_color = color, fill_type="solid")
+
 		#workbook.close()
-		workbook.save('results.xlsx')
+		workbook.save(file_name)
