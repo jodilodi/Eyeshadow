@@ -14,6 +14,13 @@ from array import array
 import sys
 import math
 import time
+
+
+
+
+from bs4 import BeautifulSoup
+import requests
+import re
 #~/.bashrc or ~/.bash_aliases
 #alias python=python3
 #run source ~/.bashrc or source ~/.bash_aliases
@@ -38,7 +45,8 @@ def clear():
 	_ = call('clear' if os.name == 'posix' else 'cls')
 
 def Insert_New_Eyeshadows():
-	branddata = Makeup_MongoDB.Get_Makeup_DB_After("Makeup Atelier")
+	branddata = Makeup_MongoDB.Get_Makeup_DB_After("Illamasqua")
+	# branddata = Makeup_MongoDB.Get_All_Brands()
 	for brand in branddata:
 		print(brand)
 		totalpages = Temptalia_Scrapping.Get_Nav_Pages(brand["temptalia_id"])
@@ -55,10 +63,13 @@ def Insert_New_Eyeshadows():
 			else:
 				print("Added")
 
-def Calculate_RGB(filename):
+
+def Calculate_RGB(filename, filenamejs, filenamejson):
 	Brands = Makeup_MongoDB.Get_All_Brands()
-	fieldnames = ["Brand", "FoundIn", "Name", "MiddleRGB", "AvgRGB","ModeCount", "ModeRGB","MinRGB", "MaxRGB", "ColorRGB", "ColorAvgRGB", "ColorModeRGB" ]
+	fieldnames = ["Brand", "FoundIn", "Name", "MiddleRGB", "AvgRGB","ModeCount", "ModeRGB","BorderDistance", "ColorRGB", "ColorAvgRGB", "ColorModeRGB" ]
 	Write_Results_Class.Write_To_XSLX_Title(fieldnames, filename)
+	Write_Results_Class.Initialize_JS_File(filenamejs)
+	Write_Results_Class.Initialize_JSON_File(filenamejson)
 	for brand in Brands:
 		print(brand)
 		Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows_By_Brand(brand["name"])
@@ -97,17 +108,33 @@ def Calculate_RGB(filename):
 			 	RowDict["AvgRGB"] = results
 			 	RowDict["ModeCount"] = ModeCount
 			 	RowDict["ModeRGB"] =  ModeRGB
-			 	RowDict["MinRGB"] = MIN
-			 	RowDict["MaxRGB"] = MAX
+			 	# RowDict["MinRGB"] = MIN
+			 	# RowDict["MaxRGB"] = MAX
+			 	RowDict["BorderDistance"] = borderdistance
 			 	colorRows.append(RowDict)
 		print('writing brand to excel')	
 		Write_Results_Class.Write_To_XSLX_RGB(colorRows, filename)
+		print('writing brand to js file')
+		Write_Results_Class.Write_To_JS(brand, colorRows, filenamejs)
+		print('writing eyeshadow detail to json objects')
+		Write_Results_Class.Write_To_JSon_Objects(colorRows, filenamejson)
+
 	print("Total " + str(count))
 	print(errorcolors)
 	print("Error " + str(error))
 	Write_Results_Class.Write_To_CSV(fieldnames, colorRows)
-
+	Write_Results_Class.Close_JSON_File(filenamejson)
 	#workbook.close()
+
+def Find_Finishes():
+	Brands = Makeup_MongoDB.Get_All_Brands()
+	for brandindex in range(0,1):
+		brand = Brands[brandindex]
+		Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows_By_Brand(brand["name"])
+		for eyeshadowindex in range(0,3):
+			eyeshadow = Eyeshadows[eyeshadowindex]
+			print(eyeshadow["src"])
+			Temptalia_Scrapping.Get_Eyeshadow_Finish(eyeshadow["src"])
 
 def Welcome_Screen():
 	print('###########################################')
@@ -125,7 +152,8 @@ def Print_Menu():
 	print('7. Convert Eyeshadow Byte To Img')
 	print('8. Test Pixel Colors')
 	print('9. Copy Collection')
-
+	print('10. Save Brands to JS File')
+	print('11. Find Finishes')
 if __name__ == "__main__":
 	clear()
 	Welcome_Screen()
@@ -171,17 +199,22 @@ if __name__ == "__main__":
 		elif user_input == "8":
 			filename = input("Enter Results File Name (Default is Results):")
 			if len(filename) == 0:
-				filename = "Results"
+				filename  = "Results"
+			filenamejs = "{0}.js".format(filename)
+			filenamejson = "{0}_EyeshadowDetail.js".format(filename)
 			filename = "{0}.xlsx".format(filename)
-			
-			Calculate_RGB(filename)
+			Calculate_RGB(filename, filenamejs, filenamejson)
 		elif user_input == "9":
 			from_collection = input('From Collection: ')
 			to_collection = input('To Collection: ')
 			Makeup_MongoDB.Copy_Collection(from_collection, to_collection)
 			print('Complete Copying Collection')
-		# elif user_input == "reset":
-		# 	os.execl(sys.executable, 'python', "Main.py")
+		elif user_input == "10":
+			Brands = Makeup_MongoDB.Get_All_Brands()
+			Write_Results_Class.Write_Brands_To_JS(Brands)
+			print("Complete")
+		elif user_input == "11":
+			Find_Finishes()
 		elif user_input == "reset":
 			python = sys.executable
 			os.execl(python, python, * sys.argv)

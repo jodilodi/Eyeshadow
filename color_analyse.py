@@ -83,7 +83,7 @@ class Color_Analysis:
 		return RGBAvg
 
 	def Calculate_Image_Box(image, middle):
-		borderdistance = 100
+		borderdistance = 200
 		middlex, middley = middle[0],middle[1]
 		width, height = image.size
 

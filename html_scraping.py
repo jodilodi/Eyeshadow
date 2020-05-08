@@ -12,6 +12,9 @@
 
 from bs4 import BeautifulSoup
 import requests
+import re
+
+import sys
 
 #error handling
 
@@ -25,7 +28,7 @@ class Brand:
 		self.id = id
 
 class Eyeshadow:
-	def __init__(self, name, imgsrc, src, foundin, grade, brand):
+	def __init__(self, name, imgsrc, src, foundin, grade, brand, finish):
 		self.name = name
 		self.imgsrc = imgsrc
 		response = requests.get(imgsrc, timeout=5)
@@ -34,6 +37,7 @@ class Eyeshadow:
 		self.foundin = foundin
 		self.temptaliagrade = grade
 		self.brand = brand
+		self.finish = finish
 
 class Temptalia_Scrapping:
 
@@ -121,6 +125,27 @@ class Temptalia_Scrapping:
 				return gradebox.text
 		except:
 			return ""
+	def Get_Eyeshadow_Finish(url):
+		try:
+			r = requests.get(url, timeout = 5)
+			html_doc = r.text
+			soup = BeautifulSoup(html_doc, 'html.parser')
+
+			description = "none"
+			for tag in soup.find_all("meta"):
+				if tag.get("name", None) == "twitter:description":
+					description = tag["content"]
+
+			desSplit = description.split(" ")
+			findex = 0
+			try:
+				findex = desSplit.index('finish')
+			except:
+				findex = desSplit.index('finish.')
+			print(desSplit[findex-1])
+			return desSplit[findex - 1]
+		except:
+			return -1
 
 	def Get_Eyeshadow(brand, id, pageindex):
 		#brand, type is eyeshadow, date rangeis set to all time
@@ -146,10 +171,12 @@ class Temptalia_Scrapping:
 				src = element.find("h5", class_="f-3 text-base text-ellipsis m-0").find("a").get("href")
 				foundin = Temptalia_Scrapping.Get_Available_In_Palette(src)
 				grade = Temptalia_Scrapping.Get_Eyeshadow_Rank(src)
-				eyeshadowcolors.append(Eyeshadow(colorName, img, src, foundin, grade, brand))
+				finish = Temptalia_Scrapping.Get_Eyeshadow_Finish(foundin)
+				eyeshadowcolors.append(Eyeshadow(colorName, img, src, foundin, grade, brand, finish))
 				print(colorName)
 			except:
 				print("Error in adding eyeshadow")
+				print(sys.exc_info()[0])
 				continue
 		return eyeshadowcolors
 
@@ -173,6 +200,7 @@ class Temptalia_Scrapping:
 		except:
 			return 1
 
+	
 
 
 

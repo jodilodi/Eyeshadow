@@ -13,6 +13,62 @@ class Write_Results_Class:
 			for datarow in data:
 				writer.writerow(datarow)
 
+	def Initialize_JS_File(file_name):
+		with open(file_name, 'w') as file:
+			file.write("'use strict';\n")
+			file.close()
+
+	def Initialize_JSON_File(file_name):
+		with open(file_name, 'w') as file:
+			start = "var allEyeshadowDetails = ["
+			file.write(start)
+			file.close()
+
+	def Close_JSON_File(file_name):
+		with open(file_name, 'a') as file:
+			end = "];"
+			file.write(end)
+			file.close()
+
+	def Write_To_JS(brand, data, file_name):
+		with open(file_name, 'a') as file:
+			start = "window.{0}".format(brand["name"].replace(" ", "_").replace("'","").replace("+", ""))
+			file.write(start)
+			file.write("={")
+
+			#write eyeshadow names here
+			#using avgrgb might need to do another type later
+			for eyeshadow in data:
+				eyeshadowline = "'{0}': 'rgb{1}',".format(eyeshadow["Name"].replace("'",""), eyeshadow["AvgRGB"])
+				file.write(eyeshadowline)
+			file.write("};\n")
+
+			file.close()
+
+	def Write_To_JSon_Objects( data, file_name):
+		with open(file_name, 'a') as file:
+			# start = "var allEyeshadowDetails = {"
+			# file.write(start)
+			for eyeshadow in data:
+				eyeshadowline = '{{"name":"{0}", "brand":"{1}", "palette": "{2}" }},\n'.format(eyeshadow["Name"].replace("'",""), eyeshadow["Brand"].replace("+", ""), eyeshadow["FoundIn"].strip())
+				file.write(eyeshadowline)
+			# file.write("};")
+
+	
+	def Write_Brands_To_JS(data):
+		with open('brands.js', 'w') as file:
+			start = "window.brands = [\n"
+			file.write(start)
+			for brand in data:
+				file.write("'{0}'".format(brand["name"].replace(" ", "_").replace("'","").replace("+", "")))
+				file.write(",\n")
+
+			file.write("];\n")
+			file.close()
+
+
+
+
 	def Write_To_XSLX_Title(fieldnames, file_name):
 		workbook = Workbook()
 		worksheet = workbook.create_sheet('EyeshadowSheet')
