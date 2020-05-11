@@ -94,4 +94,11 @@ class Makeup_MongoDB:
 	def Get_All_Brands():
 		return Makeup_MongoDB.mybrands.find({"has_eyeshadow": True})#.limit(5)
 
-
+	def Update_Eyeshadow_Finish(brand_name, eyeshadow_name, finish_value):
+		# test find and modify from mongodb
+		query = {"brand" : brand_name, "name": eyeshadow_name }
+		update = {"$set": {"finish" : finish_value}}
+		Makeup_MongoDB.myeyeshadow.find_one_and_update(
+			query,
+			update
+			)

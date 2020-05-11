@@ -45,14 +45,13 @@ def clear():
 	_ = call('clear' if os.name == 'posix' else 'cls')
 
 def Insert_New_Eyeshadows():
-	branddata = Makeup_MongoDB.Get_Makeup_DB_After("Illamasqua")
-	# branddata = Makeup_MongoDB.Get_All_Brands()
+	branddata = Makeup_MongoDB.Get_All_Brands()
 	for brand in branddata:
 		print(brand)
 		totalpages = Temptalia_Scrapping.Get_Nav_Pages(brand["temptalia_id"])
 		alleyeshadows = []
-		for pageindex in range(1, totalpages + 1):
-		#for pageindex in range(1,2):
+		#for pageindex in range(1, totalpages + 1):
+		for pageindex in range(1,2):
 			alleyeshadows = alleyeshadows + Temptalia_Scrapping.Get_Eyeshadow(brand["name"], brand["temptalia_id"], pageindex)
 
 		for eyeshadow in alleyeshadows:
@@ -66,7 +65,7 @@ def Insert_New_Eyeshadows():
 
 def Calculate_RGB(filename, filenamejs, filenamejson):
 	Brands = Makeup_MongoDB.Get_All_Brands()
-	fieldnames = ["Brand", "FoundIn", "Name", "MiddleRGB", "AvgRGB","ModeCount", "ModeRGB","BorderDistance", "ColorRGB", "ColorAvgRGB", "ColorModeRGB" ]
+	fieldnames = ["Brand", "FoundIn", "Name", "MiddleRGB", "AvgRGB","ModeCount", "ModeRGB","BorderDistance","Finish", "ColorRGB", "ColorAvgRGB", "ColorModeRGB" ]
 	Write_Results_Class.Write_To_XSLX_Title(fieldnames, filename)
 	Write_Results_Class.Initialize_JS_File(filenamejs)
 	Write_Results_Class.Initialize_JSON_File(filenamejson)
@@ -108,9 +107,8 @@ def Calculate_RGB(filename, filenamejs, filenamejson):
 			 	RowDict["AvgRGB"] = results
 			 	RowDict["ModeCount"] = ModeCount
 			 	RowDict["ModeRGB"] =  ModeRGB
-			 	# RowDict["MinRGB"] = MIN
-			 	# RowDict["MaxRGB"] = MAX
 			 	RowDict["BorderDistance"] = borderdistance
+			 	RowDict["Finish"] = eyeshadow["finish"]
 			 	colorRows.append(RowDict)
 		print('writing brand to excel')	
 		Write_Results_Class.Write_To_XSLX_RGB(colorRows, filename)
@@ -128,13 +126,17 @@ def Calculate_RGB(filename, filenamejs, filenamejson):
 
 def Find_Finishes():
 	Brands = Makeup_MongoDB.Get_All_Brands()
-	for brandindex in range(0,1):
-		brand = Brands[brandindex]
+	#for brandindex in range(0,1):
+	#	brand = Brands[brandindex]
+	for brand in Brands:
 		Eyeshadows = Makeup_MongoDB.Get_All_Eyeshadows_By_Brand(brand["name"])
-		for eyeshadowindex in range(0,3):
-			eyeshadow = Eyeshadows[eyeshadowindex]
+		#for eyeshadowindex in range(0,3):
+		#eyeshadow = Eyeshadows[eyeshadowindex]
+		for eyeshadow in Eyeshadows:
 			print(eyeshadow["src"])
-			Temptalia_Scrapping.Get_Eyeshadow_Finish(eyeshadow["src"])
+			print(eyeshadow["name"])
+			finish = Temptalia_Scrapping.Get_Eyeshadow_Finish(eyeshadow["src"])
+			Makeup_MongoDB.Update_Eyeshadow_Finish(brand["name"], eyeshadow["name"], finish)
 
 def Welcome_Screen():
 	print('###########################################')
@@ -146,14 +148,14 @@ def Print_Menu():
 	print('1. Exit')
 	print('2. Delete Brands Collection')
 	print('3. Screen Scrap Brands')
-	print('4. Delete Eyeshadows Colelction')
+	print('4. Delete Eyeshadows Collection')
 	print('5. Screen Scrap Eyeshadows')
 	print('6. Print All Eyeshadows')
 	print('7. Convert Eyeshadow Byte To Img')
-	print('8. Test Pixel Colors')
+	print('8. Anaylze Eyeshadows and Save to File')
 	print('9. Copy Collection')
 	print('10. Save Brands to JS File')
-	print('11. Find Finishes')
+	print('11. Find Finishes and save to MongoDB')
 if __name__ == "__main__":
 	clear()
 	Welcome_Screen()

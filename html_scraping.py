@@ -127,6 +127,7 @@ class Temptalia_Scrapping:
 			return ""
 	def Get_Eyeshadow_Finish(url):
 		try:
+			print(url)
 			r = requests.get(url, timeout = 5)
 			html_doc = r.text
 			soup = BeautifulSoup(html_doc, 'html.parser')
@@ -145,6 +146,7 @@ class Temptalia_Scrapping:
 			print(desSplit[findex-1])
 			return desSplit[findex - 1]
 		except:
+			print(sys.exc_info()[0])
 			return -1
 
 	def Get_Eyeshadow(brand, id, pageindex):
@@ -171,7 +173,7 @@ class Temptalia_Scrapping:
 				src = element.find("h5", class_="f-3 text-base text-ellipsis m-0").find("a").get("href")
 				foundin = Temptalia_Scrapping.Get_Available_In_Palette(src)
 				grade = Temptalia_Scrapping.Get_Eyeshadow_Rank(src)
-				finish = Temptalia_Scrapping.Get_Eyeshadow_Finish(foundin)
+				finish = Temptalia_Scrapping.Get_Eyeshadow_Finish(src)
 				eyeshadowcolors.append(Eyeshadow(colorName, img, src, foundin, grade, brand, finish))
 				print(colorName)
 			except:

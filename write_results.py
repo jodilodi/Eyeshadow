@@ -50,7 +50,11 @@ class Write_Results_Class:
 			# start = "var allEyeshadowDetails = {"
 			# file.write(start)
 			for eyeshadow in data:
-				eyeshadowline = '{{"name":"{0}", "brand":"{1}", "palette": "{2}" }},\n'.format(eyeshadow["Name"].replace("'",""), eyeshadow["Brand"].replace("+", ""), eyeshadow["FoundIn"].strip())
+				eyeshadowline = '{{"name":"{0}", "brand":"{1}", "palette": "{2}", "finish": "{3}" }},\n'.format(
+					eyeshadow["Name"].replace("'",""), 
+					eyeshadow["Brand"].replace("+", ""), 
+					eyeshadow["FoundIn"].strip(), 
+					eyeshadow["Finish"])
 				file.write(eyeshadowline)
 			# file.write("};")
 
